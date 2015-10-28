@@ -9,7 +9,7 @@ module Veewee
           shell_exec("#{command}")
         end
 
-        def add_sata_controller 
+        def add_sata_controller
           #unless => "${vboxcmd} showvminfo \"${vname}\" | grep \"SATA Controller\" ";
           if vbox_version >= '4.3.0'
             command ="#{@vboxcmd} storagectl \"#{name}\" --name \"SATA Controller\" --add sata --hostiocache #{definition.hostiocache} --portcount #{definition.disk_count}"
@@ -101,13 +101,13 @@ module Veewee
 
         def attach_disk_common(storagectl, device_number)
           place=get_vbox_home
-          
+
           1.upto(definition.disk_count.to_i) do |f|
             location=name+"#{f}."+definition.disk_format.downcase
-  
+
             location="#{File.join(place,name,location)}"
             ui.info "Attaching disk: #{location}"
-  
+
             #command => "${vboxcmd} storageattach \"${vname}\" --storagectl \"SATA Controller\" --port 0 --device 0 --type hdd --medium \"${vname}.vdi\"",
             command ="#{@vboxcmd} storageattach \"#{name}\" --storagectl \"#{storagectl}\" --port #{f-1} --device #{device_number} --type hdd --medium \"#{location}\""
             shell_exec("#{command}")
@@ -209,13 +209,14 @@ module Veewee
           end
 
           unless definition.virtualbox[:vm_options].nil? || definition.virtualbox[:vm_options][0].nil?
-            definition.virtualbox[:vm_options][0].each do |vm_flag,vm_flag_value|
-              ui.info "Setting VM Flag #{vm_flag} to #{vm_flag_value}"
-              command="#{@vboxcmd} modifyvm \"#{name}\" --#{vm_flag.to_s} #{vm_flag_value}"
-              shell_exec("#{command}")
+            definition.virtualbox[:vm_options][0].each do |vm_flag, vm_flag_value_list|
+                vm_flag_value_list.each do |vm_flag_value|
+                    ui.info "Setting VM Flag #{vm_flag} to #{vm_flag_value}"
+                    command="#{@vboxcmd} modifyvm \"#{name}\" --#{vm_flag.to_s} #{vm_flag_value}"
+                    shell_exec("#{command}")
+                end
             end
           end
-
         end
       end
     end
