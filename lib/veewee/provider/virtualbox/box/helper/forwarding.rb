@@ -23,7 +23,7 @@ module Veewee
               :guest_port => details[5]
             }
           end
-          return result
+          return result[name]
         end
 
         def delete_forwarding(name)

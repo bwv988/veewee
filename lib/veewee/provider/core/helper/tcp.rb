@@ -25,7 +25,7 @@ module Veewee
             return false
           end
 
-          # This tries to guess a local free tcp port 
+          # This tries to guess a local free tcp port
           def guess_free_port(min_port,max_port)
             ui.info "Finding unused TCP port in range: #{min_port} - #{max_port}"
 

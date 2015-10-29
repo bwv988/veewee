@@ -53,7 +53,7 @@ module Veewee
           self.add_floppy_controller
           self.attach_floppy
 
-          if definition.winrm_user && definition.winrm_password # prefer winrm 
+          if definition.winrm_user && definition.winrm_password # prefer winrm
             env.ui.warn "Using winrm because winrm_user and winrm_password are both set"
             guessed_port=guess_free_port(definition.winrm_host_port.to_i,definition.winrm_host_port.to_i+40).to_s
             if guessed_port.to_s!=definition.winrm_host_port
