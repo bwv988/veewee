@@ -68,7 +68,6 @@ module Veewee
           current_dir = FileUtils.pwd
           ui.info "Creating a temporary directory for export"
           tmp_dir = Dir.mktmpdir
-          env.logger.debug("Create temporary directory for export #{tmp_dir}")
 
           begin
 
@@ -77,15 +76,17 @@ module Veewee
             # Handling the Vagrantfile
             if options["vagrantfile"].to_s == ""
 
-              # Fetching mac address
-
+              # Fetching mac address and forwarding rules.
+              command = "#{@vboxcmd} showvminfo --details --machinereadable \"#{self.name}\""
+              vbox_manage_output = shell_exec("#{command}")
               data = {
-                :macaddress => get_mac_address
+                :macaddress => get_mac_address(vbox_manage_output),
+                :rules => get_fw_rules(vbox_manage_output)
               }
 
               # Prepare the vagrant erb
               vars = ErbBinding.new(data)
-              template_path = File.join(File.dirname(__FILE__),'..','..','..','templates',"Vagrantfile.erb")
+              template_path = File.join(File.dirname(__FILE__),'..','..','..','templates',"Vagrantfile.erb")             
               template = File.open(template_path).readlines.join
               erb = ERB.new(template)
               vars_binding = vars.send(:get_binding)
@@ -153,14 +154,31 @@ module Veewee
           ui.info "vagrant ssh"
         end
 
-        def get_mac_address
-          command = "#{@vboxcmd} showvminfo --details --machinereadable \"#{self.name}\""
-          shell_results = shell_exec("#{command}")
-          mac = shell_results.stdout.split(/\n/).grep(/^macaddress1/)[0].split('=')[1].split('"')[1]
+        def get_mac_address(vbox_manage_output)
+          mac = vbox_manage_output.stdout.split(/\n/).grep(/^macaddress1/)[0].split('=')[1].split('"')[1]
           env.logger.debug("mac address: #{mac}")
           return mac
         end
 
+        def get_fw_rules(vbox_manage_output)
+            # Create Array of Hashes from Firewall rules.
+            fw_rules = vbox_manage_output.stdout.split(/\n/).grep(/^Forwarding/)
+            rules = Array.new
+            fw_rules.each do |fw_rule|
+                guest_port = fw_rule.split('=')[1].split(',')[5].chomp('"')
+                unless guest_port == "22" then
+                    rule = Hash.new
+                    rule['rule_name'] = fw_rule.split('=')[1].split(',')[0].reverse.chomp('"').reverse
+                    rule['protocol'] = fw_rule.split('=')[1].split(',')[1]
+                    rule['host_ip'] = fw_rule.split('=')[1].split(',')[2]
+                    rule['host_port'] = fw_rule.split('=')[1].split(',')[3]
+                    rule['guest_ip'] = fw_rule.split('=')[1].split(',')[4]
+                    rule['guest_port'] = guest_port
+                    rules.push(rule)
+                end
+            end
+            return rules
+        end
       end #Module
     end #Module
   end #Module

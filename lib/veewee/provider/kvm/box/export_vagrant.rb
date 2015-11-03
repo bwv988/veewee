@@ -55,7 +55,6 @@ module Veewee
           current_dir = FileUtils.pwd
           ui.info "Creating a temporary directory for export"
           tmp_dir = Dir.mktmpdir
-          env.logger.debug("Create temporary directory for export #{tmp_dir}")
 
           server = @connection.servers.all(:name => name).first
           volume = server.volumes.find(&:path)
